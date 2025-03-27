@@ -24,12 +24,15 @@ import android.media.MediaCodec;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Message;
+import android.os.Trace;
+
 import androidx.annotation.GuardedBy;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.annotation.VisibleForTesting;
 import com.google.android.exoplayer2.decoder.CryptoInfo;
 import com.google.android.exoplayer2.util.ConditionVariable;
+import com.google.android.exoplayer2.util.TraceUtil;
 import com.google.android.exoplayer2.util.Util;
 import java.util.ArrayDeque;
 import java.util.Arrays;
@@ -243,7 +246,9 @@ class AsynchronousMediaCodecBufferEnqueuer {
       // the crypto module when audio and video are sharing the same DRM session
       // (see [Internal: b/149908061]).
 //      synchronized (QUEUE_SECURE_LOCK) {
+      TraceUtil.beginSection("doQueueSecureInputBuffer");
         codec.queueSecureInputBuffer(index, offset, info, presentationTimeUs, flags);
+      Trace.endSection();
 //      }
     } catch (RuntimeException e) {
       pendingRuntimeException.compareAndSet(null, e);

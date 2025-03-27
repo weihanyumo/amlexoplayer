@@ -159,10 +159,9 @@ public class ContainerMediaChunk extends BaseMediaChunk {
             break;
           }
           long currentInputPosition = input.getPosition();
-//          Log.d("ContainerMediaChunk", "load currentPos: "+ currentInputPosition + " startPos: "+ position + " delta: "+ (currentInputPosition-position) );
           if (currentInputPosition > position + 128 * 1024) {
             position = currentInputPosition;
-//            Log.d(TAG, "loadCondition close: "+ loadCondition);
+
             loadCondition.close();
             TraceUtil.beginSection("askContinue");
             if (!loadCanceled) {

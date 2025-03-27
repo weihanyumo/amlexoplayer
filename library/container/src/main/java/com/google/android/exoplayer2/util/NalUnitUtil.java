@@ -15,6 +15,8 @@
  */
 package com.google.android.exoplayer2.util;
 
+import static java.lang.Math.floor;
+import static java.lang.Math.log;
 import static java.lang.Math.min;
 
 import androidx.annotation.Nullable;
@@ -72,6 +74,7 @@ public final class NalUnitUtil {
     public final @C.ColorSpace int colorSpace;
     public final @C.ColorRange int colorRange;
     public final @C.ColorTransfer int colorTransfer;
+    public final float frameRate;
 
     public SpsData(
         int profileIdc,
@@ -90,7 +93,8 @@ public final class NalUnitUtil {
         boolean deltaPicOrderAlwaysZeroFlag,
         @C.ColorSpace int colorSpace,
         @C.ColorRange int colorRange,
-        @C.ColorTransfer int colorTransfer) {
+        @C.ColorTransfer int colorTransfer,
+        float frameRate) {
       this.profileIdc = profileIdc;
       this.constraintsFlagsAndReservedZero2Bits = constraintsFlagsAndReservedZero2Bits;
       this.levelIdc = levelIdc;
@@ -108,6 +112,7 @@ public final class NalUnitUtil {
       this.colorSpace = colorSpace;
       this.colorRange = colorRange;
       this.colorTransfer = colorTransfer;
+      this.frameRate = frameRate;
     }
   }
 
@@ -376,6 +381,7 @@ public final class NalUnitUtil {
     int levelIdc = data.readBits(8);
     int seqParameterSetId = data.readUnsignedExpGolombCodedInt();
 
+    float frameRate = 30;
     int chromaFormatIdc = 1; // Default is 4:2:0
     boolean separateColorPlaneFlag = false;
     if (profileIdc == 100
@@ -496,6 +502,16 @@ public final class NalUnitUtil {
               ColorInfo.isoTransferCharacteristicsToColorTransfer(transferCharacteristics);
         }
       }
+      if (data.readBit()) {// timingInfoPresentFlag
+        int numUnitsInTick = data.readBits(32);
+        int timeScale = data.readBits(32);
+        boolean fixedFrameRateFlag = data.readBit();
+        if (numUnitsInTick > 0 && timeScale > 0) {
+          frameRate = (float) timeScale / (2 * numUnitsInTick);
+          android.util.Log.d(TAG, "parseSpsNalUnitPayload: frameRate:"+ frameRate);
+        }
+      }
+
     }
 
     return new SpsData(
@@ -515,7 +531,8 @@ public final class NalUnitUtil {
         deltaPicOrderAlwaysZeroFlag,
         colorSpace,
         colorRange,
-        colorTransfer);
+        colorTransfer,
+        frameRate);
   }
 
   /**
